@@ -23,11 +23,6 @@ adminFirebase.initializeApp(
 );
 
 const db = adminFirebase.firestore();
-const sentMessagesDocRef = db.collection('whatsapp').doc('sentMessages');
-
-
-
-
 
 // Create an Express server
 const app = express();
