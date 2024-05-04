@@ -18,7 +18,7 @@ const localStorage = new LocalStorage('./localstorage');
 
 adminFirebase.initializeApp(
   {
-    credential: adminFirebase.credential.cert(require('./etc/secrets/picolidb-s-adminsdk.json'))
+    credential: adminFirebase.credential.cert(require('/etc/secrets/picolidb-s-adminsdk.json'))
   }
 );
 
