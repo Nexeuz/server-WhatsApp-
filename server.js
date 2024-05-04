@@ -18,7 +18,7 @@ const localStorage = new LocalStorage('./localstorage');
 
 adminFirebase.initializeApp(
   {
-    credential: adminFirebase.credential.cert(require('/etc/secrets/picolidb-firebase-adminsdk.json'))
+    credential: adminFirebase.credential.cert(require('./picolidb-firebase-adminsdk.json'))
   }
 );
 
@@ -225,11 +225,13 @@ app.post('/generate-pdf', async (req, res) => {
     })
     await sendMessage();
     await sendPDFtoNumber();
+    res.status(200).json({ message: 'PDF sent to number '+  customer.phone });
 
     console.log('messages succesfuly sent to: ', customer.phone)
 
   } catch (e) {
     console.error(e);
+    res.status(500).json({ message: 'Error sending PDF to number '+  customer.phone });
     process.exit()
   } finally {
     localStorage.clear();
