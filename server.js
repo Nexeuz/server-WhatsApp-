@@ -54,14 +54,14 @@ const sessionId = "YOUR_CLIENT_2";
 
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
+  setInterval(() => {
+    client.getState().then(value => console.log('Client State', value), err => console.log('Client State Err', err))
+  }, 10000)
 });
 
 
 /** 
 */
-
-
-
 
 const allSessionsObject = {};
 class MyLocalAuth extends LocalAuth {
@@ -75,6 +75,9 @@ class MyLocalAuth extends LocalAuth {
 }
 
 // Create a new instance of the Client class
+
+const wwebVersion = '2.3000.1015010030-alpha';
+
 const client = new Client({
   puppeteer: {
     headless: true
@@ -85,7 +88,7 @@ const client = new Client({
   }),
   webVersionCache: {
     type: 'remote',
-    remotePath: 'https://raw.githubusercontent.com/wppconnect-team/wa-version/main/html/2.2412.54.html'
+    remotePath: `https://raw.githubusercontent.com/wppconnect-team/wa-version/main/html/${wwebVersion}.html`,
   },
   args: ['--no-sandbox',
     'disable-setuid-sandbox',
@@ -134,6 +137,18 @@ client.on('auth_failure', () => {
   });
 });
 
+client.on("change_state", (state) => {
+  console.log('Current state: ', state)
+})
+
+client.on("loading_screen", (percent, message) => {
+  console.log('Current loading screen: ', percent, message)
+})
+
+client.on("disconnected", (reason) => {
+  console.log('Disconnected reason: ', reason)
+})
+
 client.on('pup_disconnected', () => {
   process.exit();
 });
@@ -167,7 +182,7 @@ app.post('/send-message', (req, res) => {
     phone: customerData ? customerData.phone ? `${customerData.phone.slice(0, 10).trim()}` : null : null,
     points: puntos
   }
-  console.log(customer);  
+  console.log(customer);
   localStorage.setItem(KEY_CUSTOMER, JSON.stringify(customer));
   // Send a response
   res.status(200).json({ message: 'Request body processed' });
@@ -213,25 +228,25 @@ app.post('/generate-pdf', async (req, res) => {
     console.log(documentHeight);
 
     let dynamicPdfFileName = 'output.pdf'; // Replace with actual dynamic file name
-  
+
 
     await page.pdf({
       path: dynamicPdfFileName,
       margin: { top: '20px', right: '20px', bottom: '20px', left: '20px' },
-        width: '450px',
+      width: '450px',
       height: `${documentHeight * 1.2}px`,
       printBackground: true
-      
+
     })
     await sendMessage();
     await sendPDFtoNumber();
-    res.status(200).json({ message: 'PDF sent to number '+  customer.phone });
+    res.status(200).json({ message: 'PDF sent to number ' + customer.phone });
 
     console.log('messages succesfuly sent to: ', customer.phone)
 
   } catch (e) {
     console.error(e);
-    res.status(500).json({ message: 'Error sending PDF to number '+  customer.phone });
+    res.status(500).json({ message: 'Error sending PDF to number ' + customer.phone });
     process.exit()
   } finally {
     localStorage.clear();
@@ -285,7 +300,7 @@ async function sendMessage() {
 
         sendWhatsAppMessage(`¡Hola, *${capitalizeFirstLetter(customer.name)}*! 🎉 Gracias por unirte a nuestra comunidad. Para empezar con buen pie, te invitamos a seguirnos y disfrutar de un mundo lleno de novedades, concursos y promociones exclusivas:\n\n *-Facebook* toca aquí: https://www.facebook.com/piccoliangelitos\n\n *-Instagram* toca aqui: https://www.instagram.com/piccoli_angelitos/\n\n*Beneficio Extra*: ¡Síguenos y obtén un 5% de descuento en tu próxima compra!\n\n*🌟Puntos de Fidelidad*: Estás a solo *${1000 - Number(customer.points)}* puntos de ganar un bono de *$30.000*. ¡Sigue sumando!\n\n👥 *Únete a nuestro Grupo VIP*: Accede a novedades, promociones y descuentos antes que nadie. Toca aquí: https://chat.whatsapp.com/LMZPjAEt8dtDs7ukoMWox4\n\n¡Estamos emocionados por lo que viene!\n\n Gracias por confiar en nosotros.\nCon cariño,\nEl Equipo de Piccoli Angelitos 💖`, `${countryCodeCO}${customer.phone}${whatsappId}`)
         sendWhatsAppMessage('_Recuerda añadirnos a tus contactos para recibir nuestras novedades y promociones especiales._', `${countryCodeCO}${customer.phone}${whatsappId}`)
-       
+
 
       } else {
         querySnapshot.forEach(async (doc) => {
@@ -317,9 +332,9 @@ async function sendPDFtoNumber() {
   if (customer ? customer.phone : false) {
 
     const phoneNumber = `${countryCodeCO}${customer.phone}${whatsappId}`;
-  
 
-  
+
+
 
     // Construct the full path to the PDF file
     let pdfFilePath = path.join(__dirname, 'output.pdf');
