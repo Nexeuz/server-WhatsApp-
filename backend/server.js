@@ -70,7 +70,30 @@ const sessionId = "YOUR_CLIENT_2";
 
 
 io.on("connection", (socket) => {
-  console.log('New client connected');
+
+  socket.on("message", (data) => {
+    //Create new map object in here.
+    console.log('emited message');
+
+});
+
+  io.emit("message", "hello world");
+  console.log('emited message outside');
+
+
+socket.on("connect_error", (err) => {
+  // the reason of the error, for example "xhr poll error"
+  console.log(err?.message);
+
+  // some additional description, for example the status code of the initial HTTP response
+  console.log(err?.description);
+
+  // some additional context, for example the XMLHttpRequest object
+  console.log(err?.context);
+});
+
+console.log('New client connected');
+
   socket.on('disconnect', (reason, details)  => {
     console.log(reason);
 
@@ -85,14 +108,9 @@ io.on("connection", (socket) => {
   });
 
 
-    socket.on("please", (data) => {
-      //Create new map object in here.
-      console.log(data);
-      io.emit("please", { mapData: 'hola' });
-  });
 
 
-  socket.emit('message', 'please make it work.')
+
 
 
   

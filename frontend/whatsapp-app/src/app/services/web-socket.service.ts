@@ -9,11 +9,12 @@ import { environment } from '../environment';
   providedIn: 'root'
 })
 export class WebSocketService {
-  socket: Socket | undefined;
+  socket: Socket;
 
-
+constructor() {
+  this.socket = io(environment.serverSocket)
+}
   connect() {
-    this.socket = io(environment.serverSocket)
   }
 
 
