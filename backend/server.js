@@ -1,4 +1,4 @@
-const express = require("express");
+const app = require("express")();
 const { Client, LocalAuth, MessageMedia } = require('whatsapp-web.js');
 const cors = require('cors');
 const bodyParser = require('body-parser');
@@ -12,6 +12,28 @@ const adminFirebase = require('firebase-admin');
 const qrcode = require('qrcode-terminal');
 const localStorage = new LocalStorage('./localstorage');
 
+const socketIO = require('socket.io');
+const http = require('http');
+const { setTimeout } = require("timers/promises");
+
+// Create an Express server
+const port = process.env.PORT || 3001;
+app.use(cors({
+  origin: "*",
+}));
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: false }));
+
+// Socket io
+
+httpServer = http.createServer(app);
+const io = socketIO(httpServer, {
+  cors: {
+    origin: "http://localhost:4200",
+    methods: ["GET", "POST"]
+  }
+});
+
 
 // Your web app's Firebase configuration
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
@@ -24,12 +46,6 @@ adminFirebase.initializeApp(
 
 const db = adminFirebase.firestore();
 
-// Create an Express server
-const app = express();
-const port = 3001;
-app.use(cors())
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: false }));
 
 
 // customer data
@@ -50,13 +66,45 @@ const whatsappId = "@c.us"
 
 const sessionId = "YOUR_CLIENT_2";
 
-// Start the server
+// Start the servers
 
-app.listen(port, () => {
-  console.log(`Server is running on http://localhost:${port}`);
-  setInterval(() => {
-    client.getState().then(value => console.log('Client State', value), err => console.log('Client State Err', err))
-  }, 10000)
+
+io.on("connection", (socket) => {
+  console.log('New client connected');
+  socket.on('disconnect', (reason, details)  => {
+    console.log(reason);
+
+    // the low-level reason of the disconnection, for example "xhr post error"
+    console.log(details?.message);
+  
+    // some additional description, for example the status code of the HTTP response
+    console.log(details?.description);
+  
+    // some additional context, for example the XMLHttpRequest object
+    console.log(details?.context);
+  });
+
+
+    socket.on("please", (data) => {
+      //Create new map object in here.
+      console.log(data);
+      io.emit("please", { mapData: 'hola' });
+  });
+
+
+  socket.emit('message', 'please make it work.')
+
+
+  
+
+})
+
+httpServer.listen(port, () => {
+  console.log(`Socket server running on port ${port}`);
+  /**
+   * 
+   */
+
 });
 
 
@@ -100,12 +148,13 @@ const client = new Client({
 // Listen for the 'qr' event to get the QR code for authentication
 client.on('qr', (qr) => {
   console.log('Scan the QR code to authenticate:', qr);
+  io.emit('qr', qr);
   qrcode.generate(qr, { small: true })
 });
 
-
 client.on('ready', async () => {
   console.log('Client is ready to send messages');
+  io.emit('ready');
 
   const customerLocal = localStorage.getItem(KEY_CUSTOMER);
 
@@ -122,6 +171,7 @@ client.on('ready', async () => {
 
 client.on('auth_failure', () => {
   console.log('auth_failure');
+  io.emit('auth_failure', msg);
   const authSessionDirectory = path.join(__dirname, '.wwebjs_auth');
 
   // Asynchronously delete the file
@@ -366,6 +416,7 @@ function capitalizeFirstLetter(sentence) {
 
   return capitalizedSentence;
 }
+
 
 
 
